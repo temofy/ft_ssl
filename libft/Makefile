@@ -19,7 +19,7 @@ OBJ  = *.o
 all: $(NAME)
 
 $(NAME):
-	gcc -Wall -Wextra -Werror -c $(SRC) -I.
+	gcc -Wall -Wextra -Werror -g -c $(SRC) -I.
 	ar rc $(NAME) $(OBJ)
 
 clean:

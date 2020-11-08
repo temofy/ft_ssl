@@ -34,6 +34,12 @@ typedef struct		s_lst_fd
 	struct s_lst_fd	*next_lst;
 }					t_list_fd;
 
+typedef enum		e_bool
+{
+	FALSE = 0,
+	TRUE = 1
+}					t_bool;
+
 void				*ft_memset(void *b, int c, size_t len);
 void				ft_bzero(void *s, size_t n);
 void				*ft_memcpy(void *dst, const void *src, size_t n);

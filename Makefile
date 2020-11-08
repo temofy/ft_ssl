@@ -9,11 +9,11 @@ OBJ = $(SRC:.c=.o)
 all: $(NAME)
 
 %.o : %.c
-	gcc -I ./include -I ./libft -c -o $@ $^
+	gcc -g -I ./include -I ./libft -c -o $@ $^
 
 $(NAME): $(OBJ)
 	@make -C ./libft all
-	gcc  -I ./include/ -I ./libft -L ./libft libft.a  -lcrypto -lm -o $(NAME) $(OBJ)
+	gcc -g -I ./include/ -I ./libft -o $(NAME) $(OBJ) -Llibft -lft -lm
 
 
 clean:
