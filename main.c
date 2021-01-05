@@ -48,120 +48,165 @@ char	*get_command(t_command cmd)
 
 void	print_hash(unsigned char *hash, size_t hash_bit)
 {
-	for (int i=0;i< 16;i++)
+	for (int i=0; i < hash_bit / 8; i++)
 	{
 		printf("%02x", hash[i]);
 	}
 }
 
-char	*read_input(int fd)
+t_message	*read_input(int fd)
 {
-	char *message;
-	char buf[50];
-	size_t message_len = 0;
-	size_t read_bytes;
+	char		*buf;//[50];
+	size_t		read_bytes;
+	t_message	*message;
 
+	message = malloc(sizeof(message));
 	read_bytes = 0;
-	message = NULL;
-	bzero(buf, 50);
-	while ((read_bytes = read(fd, buf, sizeof(buf))) > 0)
+	message->message = NULL;
+	message->message_len = 0;
+	buf = ft_memalloc(BUFF_SIZE);
+	while ((read_bytes = read(fd, buf, BUFF_SIZE)) > 0)
 	{
-		if (message == NULL)
-			message = ft_strdup(buf);
+		if (message->message == NULL)
+		{
+			message->message = ft_memalloc(read_bytes);
+			message->message = ft_memcpy(message->message, buf, read_bytes);
+			free(buf);
+		}
 		else
-			message = ft_strfjoin(message, buf, 1);
-		message_len += read_bytes;
-		bzero(buf, read_bytes);
+			message->message = ft_strljoin(message->message, buf, message->message_len, read_bytes);
+		message->message_len += read_bytes;
+		buf = ft_memalloc(BUFF_SIZE);
 	}
-	// ft_putstr("\nMessage: ");
-	// ft_putstr(message);
-	// ft_putstr("\n");
 	return (message);
 }
 
-void	calculate_hash(char *message, t_ssl_args *ft_ssl_args)
+void	handle_md5_cmd(t_message *message, t_ssl_args *ft_ssl_args)
 {
 	unsigned char	*hash;
 
-	//if(ft_ssl_args->file != NULL)
-		
-	if (ft_ssl_args->cmd == MD5_CMD)
+	hash = MD5(message->message, message->message_len, hash);
+	if (ft_ssl_args->flags & FLAG_P)
 	{
-		MD5(message, ft_strlen(message), hash);
-		if (ft_ssl_args->file || (ft_ssl_args->flags && FLAG_S))
+		ft_putstr(message->message);
+		ft_ssl_args->flags -= FLAG_P; 
+		print_hash(hash, MD5_HASH_BIT);
+	}
+	else if (ft_ssl_args->files || (ft_ssl_args->flags & FLAG_S))
+	{
+		if (ft_ssl_args->flags & FLAG_R)
 		{
-			if (ft_ssl_args->flags && FLAG_R)
-			{
-				print_hash(hash, MD5_HASH_BIT);
-				if (ft_ssl_args->file && ((ft_ssl_args->flags && FLAG_Q) == 0))
-					printf(" %s\n", ft_ssl_args->file);
-				else if ((ft_ssl_args->flags && FLAG_S) && ((ft_ssl_args->flags && FLAG_Q) == 0))
-					printf(" (\"%s\"", message);
-			}
-			else
-			{
-				if (ft_ssl_args->file && ((ft_ssl_args->flags && FLAG_Q) == 0))
-					printf("MD5 (%s) = ", ft_ssl_args->file);
-				else if ((ft_ssl_args->flags && FLAG_S) && ((ft_ssl_args->flags && FLAG_Q) == 0)) 
-					printf("MD5 (\"%s\" = ", message);
-				print_hash(hash, MD5_HASH_BIT);
-			}
+			print_hash(hash, MD5_HASH_BIT);
+			if ((ft_ssl_args->flags & FLAG_S)  && ft_ssl_args->s_strings && ((ft_ssl_args->flags & FLAG_Q) == 0))
+				printf(" \"%s\"", message->message);
+			else if (ft_ssl_args->files && ((ft_ssl_args->flags & FLAG_Q) == 0))
+				printf(" %s", (char*)ft_ssl_args->files->content);
 		}
 		else
+		{
+			if ((ft_ssl_args->flags & FLAG_S) && ft_ssl_args->s_strings && ((ft_ssl_args->flags & FLAG_Q) == 0)) 
+				printf("MD5 (\"%s\") = ", message->message);
+			else if (ft_ssl_args->files && ((ft_ssl_args->flags & FLAG_Q) == 0))
+				printf("MD5 (%s) = ", (char*)ft_ssl_args->files->content);
 			print_hash(hash, MD5_HASH_BIT);
+		}
+	}
+	else
+		print_hash(hash, MD5_HASH_BIT);
+}
+
+void	handle_sha256_cmd(t_message *message, t_ssl_args *ft_ssl_args)
+{
+	unsigned char	*hash;
+
+	hash = sha256(message->message, message->message_len, hash);
+	if (ft_ssl_args->flags & FLAG_P)
+	{
+		ft_putstr(message->message);
+		ft_ssl_args->flags -= FLAG_P; 
+		print_hash(hash, SHA256_HASH_BIT);
+	}
+	else if (ft_ssl_args->files || (ft_ssl_args->flags & FLAG_S))
+	{
+		if (ft_ssl_args->flags & FLAG_R)
+		{
+			print_hash(hash, SHA256_HASH_BIT);
+			if ((ft_ssl_args->flags & FLAG_S)  && ft_ssl_args->s_strings && ((ft_ssl_args->flags & FLAG_Q) == 0))
+				printf(" \"%s\"", message->message);
+			else if (ft_ssl_args->files && ((ft_ssl_args->flags & FLAG_Q) == 0))
+				printf(" %s", (char*)ft_ssl_args->files->content);
+		}
+		else
+		{
+			if ((ft_ssl_args->flags & FLAG_S) && ft_ssl_args->s_strings && ((ft_ssl_args->flags & FLAG_Q) == 0)) 
+				printf("SHA256 (\"%s\") = ", message->message);
+			else if (ft_ssl_args->files && ((ft_ssl_args->flags & FLAG_Q) == 0))
+				printf("SHA256 (%s) = ", (char*)ft_ssl_args->files->content);
+			print_hash(hash, SHA256_HASH_BIT);
+		}
+	}
+	else
+		print_hash(hash, SHA256_HASH_BIT);
+}
+
+void	calculate_hash(t_message *message, t_ssl_args *ft_ssl_args)
+{		
+	if (ft_ssl_args->cmd == MD5_CMD)
+	{
+		handle_md5_cmd(message, ft_ssl_args);
 	}
 	else if (ft_ssl_args->cmd == SHA256_CMD)
 	{
-
+		handle_sha256_cmd(message, ft_ssl_args);
 	}
 	else if (ft_ssl_args->cmd == SHA512_CMD)
 	{
 
 	}
+	free(message->message);
+	free(message);
+	message = NULL;
+	printf("\n");
 }
 
-void	read_flags(int argc, char **argv, t_ssl_args *ft_ssl_args, int i_arg)
+
+void	read_flags(int argc, char **argv, t_ssl_args *ft_ssl_args, int *i_arg)
 {
 	ft_ssl_args->flags = 0;
 
-	while (i_arg < argc && argv[i_arg][0] == '-')
+	while (*i_arg < argc && argv[*i_arg][0] == '-')
 	{
 		int i;
 		size_t arg_len;
 
 		i = 1;
-		arg_len = ft_strlen(argv[i_arg]);
+		arg_len = ft_strlen(argv[*i_arg]);
 		while (i < arg_len)
 		{
-			if (ft_strchr("pqrs", argv[i_arg][i]))
+			if (ft_strchr("pqrs", argv[*i_arg][i]))
 			{
-				if (argv[i_arg][i] == 'p')
+				if (argv[*i_arg][i] == 'p')
 				{
-					char	*message;
-
 					ft_ssl_args->flags |= FLAG_P;
-					message = read_input(0);
-					printf("%s\n", message);
-					calculate_hash(message, ft_ssl_args);
 				}
-				else if (argv[i_arg][i] == 'q')
+				else if (argv[*i_arg][i] == 'q')
 				{
 					ft_ssl_args->flags |= FLAG_Q;
 				}
-				else if (argv[i_arg][i] == 'r')
+				else if (argv[*i_arg][i] == 'r')
 				{
 					ft_ssl_args->flags |= FLAG_R;
 				}
-				else if (argv[i_arg][i] == 's')
+				else if (argv[*i_arg][i] == 's')
 				{
 					ft_ssl_args->flags |= FLAG_S;
-					if (i_arg + 1 < argc)
-					{
-						calculate_hash(argv[++i_arg], ft_ssl_args);
-					}
-					else
-					{
-						//error
+					if (*i_arg + 1 < argc)
+					{				
+						if (!ft_ssl_args->s_strings)
+							ft_ssl_args->s_strings = ft_lstnew(argv[*i_arg + 1], ft_strlen(argv[*i_arg + 1]));
+						else
+							ft_lstappend(&ft_ssl_args->s_strings, ft_lstnew(argv[*i_arg + 1], ft_strlen(argv[*i_arg + 1])));
+						(*i_arg)++;
 					}
 				}
 			}
@@ -171,31 +216,27 @@ void	read_flags(int argc, char **argv, t_ssl_args *ft_ssl_args, int i_arg)
 			}
 			i++;
 		} 
-		i_arg++;
+		(*i_arg)++;
 	}
 }
 
-unsigned char	*read_file(int argc, char **argv, t_ssl_args *ft_ssl_args, int i_arg)
+unsigned char	*read_files(int argc, char **argv, t_ssl_args *ft_ssl_args, int *i_arg)
 {
-	unsigned char	*message;
+	//unsigned char	*message;
 	int				fd;
-	
-	while (i_arg < argc)
+	t_list	*lst;
+
+	char buf[10] = {0};
+
+	while (*i_arg < argc)
 	{
-		if (fd = open("file", O_RDONLY) != -1)
-		{
-			printf("fd: %i\n", fd);
-			//message = read_input(fd);
-			//calculate_hash(message, ft_ssl_args);
-			//close(fd);
-		}
+		if (!ft_ssl_args->files)
+			ft_ssl_args->files = ft_lstnew(argv[*i_arg], ft_strlen(argv[*i_arg]));
 		else
-		{
-			printf("ft_ssl: %s: %s: No such file or directory", get_command(ft_ssl_args->cmd), argv[i_arg]);
-			//ft_ssl: md5: -s: No such file or directory
-			//error file
-		}
-		i_arg++;
+			ft_lstappend(&ft_ssl_args->files, ft_lstnew(argv[*i_arg], ft_strlen(argv[*i_arg])));
+		// 	ft_ssl_args->files = (unsigned char**)malloc(sizeof(unsigned char*) * (argc - *i_arg));
+		
+		(*i_arg)++;
 	}
 }
 
@@ -204,10 +245,11 @@ void	read_args(int argc, char **argv, t_ssl_args *ft_ssl_args)
 	int i_arg;
 
 	i_arg = 2;
-	ft_ssl_args->file = NULL;
+	ft_ssl_args->s_strings = NULL;
+	ft_ssl_args->files = NULL;
 	if (argc <= 1)
 	{
-		ft_putstr("usage: ft_ssl command [command opts] [command args]");
+		ft_putstr("usage: ft_ssl command [command opts] [command args]\n");
 		exit(1);
 	}
 	if (!ft_strcmp(argv[1], "md5"))
@@ -223,17 +265,62 @@ void	read_args(int argc, char **argv, t_ssl_args *ft_ssl_args)
 		ft_putstr("md5\nsha256\nsha512\n\nCipher commands:\n");
 		exit(1);
 	}
-	read_flags(argc, argv, ft_ssl_args, i_arg);
-	read_file(argc, argv, ft_ssl_args, i_arg);	
+	read_flags(argc, argv, ft_ssl_args, &i_arg);
+	read_files(argc, argv, ft_ssl_args, &i_arg);	
+}
+
+void	free_content(void *ptr, size_t content_size)
+{
+	content_size = 0;
+	free(ptr);
 }
 
 int main(int argc, char **argv)
 {
-	unsigned char *md;
+	t_message *message;
 	t_ssl_args ft_ssl_args;
 
+	t_list	*head;
+	int		fd;
 
-	md = NULL;
+	message = NULL;
 	read_args(argc, argv, &ft_ssl_args);
+	if (ft_ssl_args.flags & FLAG_P || (!ft_ssl_args.files && !(ft_ssl_args.flags & FLAG_S)))
+	{
+		message = read_input(0);
+		calculate_hash(message, &ft_ssl_args);
+	}
+	head = ft_ssl_args.s_strings;
+	while (ft_ssl_args.s_strings)
+	{
+		message = malloc(sizeof(t_message));
+		message->message = ft_strdup((char*)ft_ssl_args.s_strings->content);
+		message->message_len = ft_ssl_args.s_strings->content_size;
+		calculate_hash(message, &ft_ssl_args);
+	 	ft_ssl_args.s_strings = ft_ssl_args.s_strings->next;
+	}
+	ft_ssl_args.s_strings = head;
+	ft_lstdel(&ft_ssl_args.s_strings, free_content);
+	//free
+
+	head = ft_ssl_args.files;
+	while (ft_ssl_args.files)
+	{
+		if ((fd = open(ft_ssl_args.files->content, O_RDONLY)) != -1)
+		{
+			message = read_input(fd);
+			calculate_hash(message, &ft_ssl_args);
+			close(fd);
+		}
+		else
+		{
+			printf("ft_ssl: %s: %s: No such file or directory\n", get_command(ft_ssl_args.cmd), (char*)ft_ssl_args.files->content);
+			//ft_ssl: md5: -s: No such file or directory
+			//error file
+		}	
+	 	ft_ssl_args.files = ft_ssl_args.files->next;
+	}
+	ft_ssl_args.files = head;
+	ft_lstdel(&ft_ssl_args.s_strings, free_content);
 	return (0);
 }

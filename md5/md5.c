@@ -5,7 +5,7 @@ const unsigned int s[] = {7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17
 	23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15,
 	21, 6, 10, 15, 21, 6, 10, 15, 21};
 
-const unsigned int g_k[] = {0xd76aa478, 0xe8c7b756, 0x242070db,
+const unsigned int g_k_md5[] = {0xd76aa478, 0xe8c7b756, 0x242070db,
 	0xc1bdceee, 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501, 0x698098d8,
 	0x8b44f7af, 0xffff5bb1, 0x895cd7be, 0x6b901122, 0xfd987193, 0xa679438e,
 	0x49b40821, 0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa, 0xd62f105d,
@@ -37,54 +37,9 @@ unsigned char *split_by_byte(unsigned long var, size_t size)
 
 void adding_message_length(unsigned char *message, t_md5 *md5)
 {
-	unsigned int low_bytes = 0;
-	unsigned int high_bytes = 0;
-	unsigned char *splitted_var; 
-	int i;
-	unsigned int bit;
-
 	message += md5->variable_bit_len / 8;
 	ft_memcpy((void*)message, &md5->original_bit_len, 8);
 	md5->variable_bit_len += 64;
-	//memcpy(static_cast<void*>(end), &length, 8); memcpy(static_cast<void*>(end), &length, 8);
-	// i = 32;
-
-	// unsigned char bit2 = 127;
-	// bit = bit2 >> 7 & 1;
-
-	// while (--i >= 0)
-	// {
-	// 	bit = md5->original_bit_len >> i & 1;
-	// 	low_bytes += bit << i;
-	// }
-
-	// i = 64;
-
-	// while (--i >= 32)
-	// {
-	// 	bit = md5->original_bit_len >> i & 1;
-	// 	high_bytes += bit << i;
-	// }
-
-	// // low_bytes = 34508;
-	// // uc |= (unsigned char) (low_bytes);
-	// // uc = 0;
-	// // uc |= (unsigned char) (low_bytes >> 8);
-	// i  = -1;
-	// splitted_var = split_by_byte((unsigned long)low_bytes, sizeof(low_bytes));
-	// while (++i < 4)
-	// {
-	// 	message[md5->variable_byte_len++] = splitted_var[i];
-	// }
-	// free(splitted_var);
-
-	// i  = -1;
-	// splitted_var = split_by_byte((unsigned long)high_bytes, sizeof(high_bytes));
-	// while (++i < 4)
-	// {
-	// 	message[md5->variable_byte_len++] = splitted_var[i];
-	// }
-	// free(splitted_var);
 }
 
 unsigned int fun_f(unsigned int b, unsigned int c, unsigned int d)
@@ -107,20 +62,6 @@ unsigned int fun_i(unsigned int b, unsigned int c, unsigned int d)
 	return (c ^ (b | ~d));
 }
 
-void write_block_to_words(unsigned int *x, unsigned char *block)
-{
-	int			i;
-	int			size;
-
-	i = 0;
-	size = 0;
-	while (i < 16)
-	{
-		ft_memcpy(&x[i], (block + size), 4);
-		size += 4;
-		i++;
-	}
-}
 
 unsigned int leftrotate(unsigned int f, unsigned int s0)
 {
@@ -163,7 +104,7 @@ void		print_md5_digest(t_hash_buffer *buffer)
 	free(tmp);
 }
 
-void calculate(unsigned char *message, t_md5 *md5)
+void calculate_md5_hash(unsigned char *message, t_md5 *md5)
 {
 	DWORD	a;
 	DWORD	b;
@@ -214,7 +155,7 @@ void calculate(unsigned char *message, t_md5 *md5)
 				f = fun_i(bb, cc, dd);
 				k = (7 * j) % 16;
 			}
-			f = f + aa + g_k[j] + x[k];
+			f = f + aa + g_k_md5[j] + x[k];
 			aa = dd;
 			dd = cc;
 			cc = bb;
@@ -233,21 +174,17 @@ void calculate(unsigned char *message, t_md5 *md5)
 	}
 }
 
-void message_preprocess(unsigned char **message, const unsigned char *orinal_message, t_md5 *md5)
+void md5_message_preprocess(unsigned char **message, const unsigned char *original_message, t_md5 *md5)
 {
 	int	i;
 
-	i = -1;
-
-	md5->original_byte_len = ft_strlen(orinal_message); // проверить не нужен ли подсчет всех символов в диапозоне 0 до 255
-								// подумать если длина сообщения превышает 2305843009213693952 байт
-	md5->original_bit_len = ft_strlen(orinal_message) * 8; 
 	*message = (unsigned char*)malloc(sizeof(unsigned char) * (md5->original_byte_len + RESERVE_FOR_PADDING));
 	ft_bzero((*message) + md5->original_byte_len, sizeof(unsigned char) * (RESERVE_FOR_PADDING));
 
+	i = -1;
 	while (++i < md5->original_byte_len)
 	{
-		(*message)[i] = orinal_message[i];
+		(*message)[i] = original_message[i];
 	}
 	(*message)[i] = SINGLE_BIT;
 
@@ -262,22 +199,20 @@ void message_preprocess(unsigned char **message, const unsigned char *orinal_mes
 	}
 }
 
-unsigned char *MD5(const unsigned char *d, unsigned long n, unsigned char *md) // проверить на большом файле
+unsigned char *MD5(const unsigned char *d, unsigned long n, unsigned char *md)
 {
-	t_md5	md5;	
-	unsigned char *message;
-	int	i;
+	u_char	*message;
+	t_md5	md5;
+	int		i;	
+	int		j;
 
 	i = 0;
-	message_preprocess(&message, d, &md5);
-
-	//len_bytes = len_bits / 8;
+	md5.original_byte_len = n;
+	md5.original_bit_len = n * 8;
+	md5_message_preprocess(&message, d, &md5);
 	adding_message_length(message, &md5);
-	calculate(message, &md5);
+	calculate_md5_hash(message, &md5);
 	md = (unsigned char *)malloc(sizeof(unsigned char) * 16);
-
-	int j;
-
 	j = -1;
 	while (++j < 4)
 		md[i++] = ((unsigned char *)&md5.buffer.a)[j];
@@ -291,6 +226,4 @@ unsigned char *MD5(const unsigned char *d, unsigned long n, unsigned char *md) /
 	while (++j < 4)
 		md[i++] = ((unsigned char *)&md5.buffer.d)[j];	
 	return (md);
-	//return ((unsigned char *)&md5.buffer);
-	//print_md5_digest(&md5.buffer);
 }

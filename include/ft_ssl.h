@@ -2,6 +2,7 @@
 # define FT_SSL_H
 
 # include "md5.h"
+# include "sha256.h"
 # include <fcntl.h>
 
 # define FLAG_P 1
@@ -16,11 +17,19 @@ typedef enum	e_command
 	SHA512_CMD
 }				t_command;
 
+typedef struct	s_message
+{
+	char		*message;
+	size_t		message_len;
+}				t_message; 
+
 typedef struct	s_ssl_args
 {
 	t_command	cmd;
 	uint		flags;
-	char		*file;
+	t_list		*s_strings;
+	t_list		*files;
+	//unsigned char	**files;
 }				t_ssl_args;
 
 #endif

@@ -1,6 +1,6 @@
 NAME = ft_ssl
 
-SRC = main.c md5/md5.c 
+SRC = main.c md5/md5.c sha256/sha256.c help/help.c
 
 FLAGS = -Wall -Wextra -Werror -I ./include -I ./libft
 
@@ -13,7 +13,7 @@ all: $(NAME)
 
 $(NAME): $(OBJ)
 	@make -C ./libft all
-	gcc -g -I ./include/ -I ./libft -o $(NAME) $(OBJ) -Llibft -lft -lm
+	gcc -g -I ./include/ -I ./libft -o $(NAME) -Wall $(OBJ) -Llibft -lft
 
 
 clean:

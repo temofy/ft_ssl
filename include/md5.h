@@ -25,4 +25,5 @@ typedef struct	s_md5
 	t_hash_buffer	buffer;
 }				t_md5;		
 
-unsigned char *MD5(const unsigned char *d, unsigned long n, unsigned char *md);
+unsigned char	*MD5(const unsigned char *d, unsigned long n, unsigned char *md);
+void			write_block_to_words(unsigned int *x, unsigned char *block);
