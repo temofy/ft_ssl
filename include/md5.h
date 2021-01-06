@@ -27,3 +27,4 @@ typedef struct	s_md5
 
 unsigned char	*MD5(const unsigned char *d, unsigned long n, unsigned char *md);
 void			write_block_to_words(unsigned int *x, unsigned char *block);
+unsigned int	leftrotate(unsigned int f, unsigned int s0);

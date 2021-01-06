@@ -63,11 +63,6 @@ unsigned int fun_i(unsigned int b, unsigned int c, unsigned int d)
 }
 
 
-unsigned int leftrotate(unsigned int f, unsigned int s0)
-{
-	return (((f) << (s0)) | ((f) >> (32 - (s0))));
-}
-
 char		*add0(char *str)
 {
 	int i;
@@ -110,7 +105,7 @@ void calculate_md5_hash(unsigned char *message, t_md5 *md5)
 	DWORD	b;
 	DWORD	c;
 	DWORD	d;
-	int		i;
+	size_t	i;
 	size_t	chunks_number;
 
 	a = 0x67452301;
@@ -176,7 +171,7 @@ void calculate_md5_hash(unsigned char *message, t_md5 *md5)
 
 void md5_message_preprocess(unsigned char **message, const unsigned char *original_message, t_md5 *md5)
 {
-	int	i;
+	size_t	i;
 
 	*message = (unsigned char*)malloc(sizeof(unsigned char) * (md5->original_byte_len + RESERVE_FOR_PADDING));
 	ft_bzero((*message) + md5->original_byte_len, sizeof(unsigned char) * (RESERVE_FOR_PADDING));
@@ -212,6 +207,7 @@ unsigned char *MD5(const unsigned char *d, unsigned long n, unsigned char *md)
 	md5_message_preprocess(&message, d, &md5);
 	adding_message_length(message, &md5);
 	calculate_md5_hash(message, &md5);
+	ft_memdel((void**)&message);
 	md = (unsigned char *)malloc(sizeof(unsigned char) * 16);
 	j = -1;
 	while (++j < 4)

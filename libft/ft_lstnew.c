@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_lstnew.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cheller <marvin@42.fr>                     +#+  +:+       +#+        */
+/*   By: mosquitovaper <mosquitovaper@student.42    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/12/25 13:28:31 by cheller           #+#    #+#             */
-/*   Updated: 2018/12/28 16:04:38 by cheller          ###   ########.fr       */
+/*   Updated: 2021/01/06 21:30:59 by mosquitovap      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,12 +25,13 @@ t_list	*ft_lstnew(void const *content, size_t content_size)
 	}
 	else
 	{
-		if ((lstnew->content = malloc(content_size)) == NULL)
+		if ((lstnew->content = malloc(content_size + 1)) == NULL)
 		{
 			free(lstnew);
 			return (NULL);
 		}
 		ft_strncpy(lstnew->content, content, content_size);
+		((char*)lstnew->content)[content_size] = 0;
 		lstnew->content_size = content_size;
 	}
 	lstnew->next = NULL;

@@ -13,15 +13,22 @@
 typedef enum	e_command
 {
 	MD5_CMD,
+	SHA224_CMD,
 	SHA256_CMD,
 	SHA512_CMD
 }				t_command;
 
 typedef struct	s_message
 {
-	char		*message;
-	size_t		message_len;
+	u_char		*msg;
+	size_t		msg_len;
 }				t_message; 
+
+typedef struct	s_program_args
+{
+	char		**argv;
+	int			argc;
+}				t_p_args; 
 
 typedef struct	s_ssl_args
 {
