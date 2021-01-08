@@ -1,3 +1,0 @@
-gcc -g main_with_openssl.c libft/libft.a -lcrypto -o out_original ./out_original
-
-gcc main.c libft/libft.a -lcrypto -lm -o out
